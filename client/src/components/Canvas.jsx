@@ -1,32 +1,145 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { canvasPushToUndo, canvasSet } from "../redux/slices/canvasSlice";
+import {
+  canvasPushToUndo,
+  canvasSet,
+  canvasSetSessionId,
+  canvasSetSocket,
+  canvasSetUsername,
+} from "../redux/slices/canvasSlice";
+import { useParams } from "react-router-dom";
 import { toolSet } from "../redux/slices/toolsSlice";
 import "../scss/canvas.scss";
 import Brush from "../tools/Brush";
-
+import Modal from "./Modal/Modal";
+import Rect from "../tools/Rect";
+import axios from "axios";
 
 const Canvas = () => {
   const canvasRef = useRef();
+  const userRef = useRef();
+
   const dispatch = useDispatch();
-  const canvasRedo = useSelector((state) => state.canvas.canvasRedo)
-  const canvass = useSelector((state) => state.canvas.canvas)
+  const canvasRedo = useSelector((state) => state.canvas.canvasRedo);
+  const username = useSelector((state) => state.canvas.username);
+
+  const params = useParams(); // поулчаю парамсы чтобы в id передать сгенеренную дату переведенную в строку (см компонент App)
+  const [modalActive, setModalActive] = useState(true);
 
   useEffect(() => {
     dispatch(canvasSet(canvasRef.current));
-    dispatch(toolSet(new Brush(canvasRef.current)));
-    console.log(canvasRedo) // присваиваю состоянию кисть
-    console.log(canvass)
-  }, [canvasRedo,[]]);
+    let ctx = canvasRef.current.getContext("2d");
+    axios
+      .get(`http://localhost:5000/image?id=${params.id}`)
+      .then((response) => {
+        const img = new Image();
+        img.src = response.data;
+        img.onload = () => {
+          ctx.clearRect(
+            0,
+            0,
+            canvasRef.current.width,
+            canvasRef.current.height
+          );
+          ctx.drawImage(
+            img,
+            0,
+            0,
+            canvasRef.current.width,
+            canvasRef.current.height
+          );
+          ctx.stroke(); // обводка
+        };
+      });
+    console.log(canvasRedo);
+  }, []);
+
+  useEffect(() => {
+    // работа с вебсокетом
+
+    if (username) {
+      const socket = new WebSocket("ws://localhost:5000/"); // передать адрес на котором сервак пашет
+      dispatch(canvasSetSocket(socket));
+      dispatch(canvasSetSessionId(params.id));
+      dispatch(toolSet(new Brush(canvasRef.current, socket, params.id)));
+      socket.onopen = () => {
+        console.log("Соект пашет исправно");
+        socket.send(
+          JSON.stringify({
+            id: params.id,
+            username: username,
+            method: "connection",
+          })
+        );
+      };
+
+      socket.onmessage = (e) => {
+        let msg = JSON.parse(e.data);
+        switch (msg.method) {
+          case "connection":
+            console.log(`Пользователь ${msg.username} присоеденился`);
+            break;
+          case "draw":
+            drawHandler(msg);
+            break;
+          default:
+            break;
+        }
+      };
+    }
+  }, [username]);
+
+  const drawHandler = (msg) => {
+    const figure = msg.figure;
+    const ctx = canvasRef.current.getContext("2d");
+    switch (figure.type) {
+      case "brush":
+        Brush.draw(ctx, figure.x, figure.y);
+        break;
+      case "rect":
+        Rect.drawStatic(ctx, figure.x, figure.y, figure.width, figure.height);
+        break;
+      case "finish":
+        ctx.beginPath();
+        break;
+      default:
+        break;
+    }
+  };
+
+  // функция соеденения с вебсокетом
+  const connectHandler = () => {
+    dispatch(canvasSetUsername(userRef.current.value)); // достаю value из input
+    setModalActive(false);
+  };
 
   const mouseDownHandler = () => {
-    dispatch(canvasPushToUndo(canvasRef.current.toDataURL())) // делаю снимок текущего канваса и добавляю его в состояние
-  }
-  
+    dispatch(canvasPushToUndo(canvasRef.current.toDataURL())); // делаю снимок текущего канваса и добавляю его в состояниеa
+    axios
+      .post(`http://localhost:5000/image?id=${params.id}`, {
+        img: canvasRef.current.toDataURL(),
+      })
+      .then((res) => console.log(res.data));
+  };
+
   return (
-    <div className="canvas">
-      <canvas onMouseDown={() => mouseDownHandler()} ref={canvasRef} width={1800} height={900} />
-    </div>
+    <>
+      <Modal active={modalActive} setActive={setModalActive}>
+        <h2 className="modalTitle">Введите ваше имя</h2>
+        <input ref={userRef} className="modalInput" type="text" name="" id="" />
+        <button className="modalButton" onClick={() => connectHandler()}>
+          Войти
+        </button>
+      </Modal>
+      <div className="canvas">
+        <canvas
+          onMouseDown={() => mouseDownHandler()}
+          ref={canvasRef}
+          width={1800}
+          height={900}
+        />
+      </div>
+    </>
   );
 };
 

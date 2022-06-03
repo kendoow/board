@@ -1,0 +1,38 @@
+.modal {
+    height: 100vh;
+    width: 100vw;
+    z-index: 7;
+    backdrop-filter: blur(10px);
+    position: fixed;
+    top: 0;
+    left: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transform: translateY(-100%);
+    transition: all 0.3s;
+    &Content {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      padding: 20px;
+      border-radius: 12px;
+      background-color: #fff;
+      width: 50vw;
+    }
+  }
+  .active {
+    z-index: 7;
+    height: 100vh;
+    width: 100vw;
+    backdrop-filter: blur(10px);
+    position: fixed;
+    top: 0;
+    left: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transform: translateY(0);
+    transition: all 0.3s;
+  }

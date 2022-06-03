@@ -14,23 +14,46 @@ import Rect from "../tools/Rect";
 
 const ToolBar = () => {
   const canvasState = useSelector((state) => state.canvas);
-  const toolState = useSelector((state) => state.tool);
+  const socketState = useSelector((state) => state.canvas.socket);
+  const sessionState = useSelector((state) => state.canvas.sessionId);
   const dispatch = useDispatch();
+  console.log(canvasState);
+
 
   const changeColor = (e) => {
     dispatch(toolStrokeColor(e.target.value));
     dispatch(toolFillColor(e.target.value));
   };
+
+  const download = () => {
+    const dataUrl = canvasState.canvas.toDataURL()
+    console.log(dataUrl)
+    const a = document.createElement('a')
+    a.href = dataUrl
+    a.download = canvasState.sessionid + ".png"
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+}
+
   return (
     <div className="toolbar">
       {/* прокинуть состояния на кнопки */}
       <button
         className="toolbar__btn brush"
-        onClick={() => dispatch(toolSet(new Brush(canvasState.canvas)))}
+        onClick={() =>
+          dispatch(
+            toolSet(new Brush(canvasState.canvas, socketState, sessionState))
+          )
+        }
       />
       <button
         className="toolbar__btn rect"
-        onClick={() => dispatch(toolSet(new Rect(canvasState.canvas)))}
+        onClick={() =>
+          dispatch(
+            toolSet(new Rect(canvasState.canvas, socketState, sessionState))
+          )
+        }
       />
       <button
         className="toolbar__btn circle"
@@ -49,9 +72,15 @@ const ToolBar = () => {
         style={{ marginLeft: 10 }}
         type="color"
       />
-      <button className="toolbar__btn undo" onClick={() => dispatch(canvasUndo())}/>
-      <button className="toolbar__btn redo" onClick={() => dispatch(canvasRedo())}/>
-      <button className="toolbar__btn save" />
+      <button
+        className="toolbar__btn undo"
+        onClick={() => dispatch(canvasUndo())}
+      />
+      <button
+        className="toolbar__btn redo"
+        onClick={() => dispatch(canvasRedo())}
+      />
+      <button onClick={() => download()} className="toolbar__btn save" />
     </div>
   );
 };

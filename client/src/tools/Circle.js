@@ -37,6 +37,7 @@ export default class Circle extends Tool {
   }
 
   draw(x, y, r) {
+    this.ctx.strokeStyle = "black"
     const img = new Image(); // объект изображения
     img.src = this.saved; // передаю в переменную изображение с канваса
     // функция отрабатывает когда значение установилось

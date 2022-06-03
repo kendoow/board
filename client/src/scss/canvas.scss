@@ -12,3 +12,26 @@ canvas{
     background-color: #fff;
     margin-top:75px;
 }
+.modal{
+    &Title{
+        font-size: 32px;
+        margin-bottom: 30px;
+    }
+    &Input {
+        margin-bottom: 30px;
+        font-size: 24px;
+    }
+    &Button {
+        font-size: 24px;
+        padding: 20px 40px;
+        cursor: pointer;
+        transition: all 0.2s;
+        border: none;
+        border-radius: 5px;
+        background-color: rgb(240, 230, 125);
+        &:hover{
+            transform: scale(1.1);
+            transition: all 0.2s;
+        }
+    }
+}

@@ -2,8 +2,11 @@ import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
   canvas: null,
+  socket: null,
+  sessionId: null,
   undoList: [], // дейстия которые мы когда либо делали
   redoList: [], // отмененные действия
+  username: "",
 };
 
 const canvasSlice = createSlice({
@@ -11,10 +14,16 @@ const canvasSlice = createSlice({
   initialState,
   reducers: {
     canvasSet: (state, action) => {
-      // метод у объекта
-      //canvasSet - actionCreator, внутри действие которое работает со стейтом
       state.canvas = action.payload;
-      
+    },
+    canvasSetUsername: (state, action) => {
+      state.username = action.payload;
+    },
+    canvasSetSessionId: (state, action) => {
+      state.sessionId = action.payload;
+    },
+    canvasSetSocket: (state, action) => {
+      state.socket = action.payload;
     },
     canvasPushToUndo: (state, action) => {
       state.undoList.push(action.payload);
@@ -29,13 +38,18 @@ const canvasSlice = createSlice({
         let dataUrl = state.undoList.pop(); // если в массиве что-то есть, достаем из него 1 элемент(последнее действие сделанное пользователем)
         state.redoList.push(state.canvas.toDataURL()); // после каждой отмены действия сохраняю его в массив отмененных действий
         let img = new Image();
-        img.src = dataUrl // в src снимок последнего действия на канвасе
+        img.src = dataUrl; // в src снимок последнего действия на канвасе
         console.log(dataUrl);
-        console.log(state.undoList);
-        img.onload = async () => { // когда изменное изображение с src загрузится, тогда 
+        const mapped = () => {
+          return state.undoList.map((el) => el);
+        };
+        state.undoList = mapped();
+        console.log(mapped());
+        img.onload = () => {
+          // когда изменное изображение с src загрузится, тогда
           ctx.clearRect(0, 0, state.canvas.width, state.canvas.height); // отчищаем весь канвас чтобы избавиться от лишнего действия
-          ctx.drawImage(img, 0, 0, state.canvas.width, state.canvas.height); // передаем измененное изображение 
-        }
+          ctx.drawImage(img, 0, 0, state.canvas.width, state.canvas.height); // передаем измененное изображение
+        };
       } else {
         ctx.clearRect(0, 0, state.canvas.width, state.canvas.height); // отчистка канваса если массив пустой
       }
@@ -67,4 +81,7 @@ export const {
   canvasPushToRedo,
   canvasUndo,
   canvasRedo,
+  canvasSetUsername,
+  canvasSetSocket,
+  canvasSetSessionId,
 } = actions;

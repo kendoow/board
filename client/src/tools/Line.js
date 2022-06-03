@@ -33,6 +33,7 @@ export default class Line extends Tool {
   }
 
   draw(x, y) {
+    this.ctx.strokeStyle = "black"
     const img = new Image();
     img.src = this.saved;
     img.onload = async function () {
