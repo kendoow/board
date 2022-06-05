@@ -14,6 +14,7 @@ export default class Rect extends Tool {
 
   mouseUpHandler() {
     this.mouseDown = false;
+    this.ctx.beginPath();
     this.socket.send(
       JSON.stringify({
         method: "draw",
@@ -25,6 +26,8 @@ export default class Rect extends Tool {
           width: this.width,
           height: this.height,
           color: this.ctx.fillStyle,
+          stroke: this.ctx.strokeStyle, 
+          strokeWidth: this.ctx.lineWidth
         },
       })
     );
@@ -44,14 +47,13 @@ export default class Rect extends Tool {
       let currentY = e.pageY - e.target.offsetTop;
       this.width = currentX - this.startX; // где находится мышка - начальная позиция
       this.height = currentY - this.startY;
-
+      this.ctx.beginPath();
       this.draw(this.startX, this.startY, this.width, this.height); // соответсвтенно сам рисунок квадрата, его координаты
     }
   }
 
   draw(x, y, w, h) {
-    this.ctx.strokeStyle = "black";
-    const img = new Image(); // объект изображения
+    const img = new Image(); 
     img.src = this.saved; // передаю в переменную изображение с канваса
     // функция отрабатывает когда значение установилось
     img.onload = () => {
@@ -64,10 +66,15 @@ export default class Rect extends Tool {
     };
   }
 
-  static drawStatic(ctx, x, y, w, h) {
-    ctx.beginPath(); // говорим что начинаем рисовать новую фигуру
+  static drawStatic(ctx, x, y, w, h,color,stroke,width) { // без перезатирания рисунка 
+    console.log(this.startX, this.startY)
+    ctx.fillStyle = color
+    ctx.lineWidth = width
+    ctx.strokeStyle = stroke
+    ctx.beginPath(); 
     ctx.rect(x, y, w, h);
-    ctx.fill(); // заполнение
-    ctx.stroke(); // обводка
+    ctx.fill(); 
+    ctx.stroke(); 
+    ctx.beginPath(); 
   }
 }

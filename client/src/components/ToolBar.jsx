@@ -1,5 +1,7 @@
+import axios from "axios";
 import { useDispatch, useSelector } from "react-redux";
-import { canvasRedo, canvasUndo } from "../redux/slices/canvasSlice";
+import { useParams } from "react-router-dom";
+import { canvasPushToUndo, canvasRedo, canvasUndo } from "../redux/slices/canvasSlice";
 import {
   toolFillColor,
   toolSet,
@@ -17,8 +19,8 @@ const ToolBar = () => {
   const socketState = useSelector((state) => state.canvas.socket);
   const sessionState = useSelector((state) => state.canvas.sessionId);
   const dispatch = useDispatch();
-  console.log(canvasState);
 
+  const params = useParams();
 
   const changeColor = (e) => {
     dispatch(toolStrokeColor(e.target.value));
@@ -35,10 +37,19 @@ const ToolBar = () => {
     a.click()
     document.body.removeChild(a)
 }
+  const сlearCanvas = () => {
+    const ctx = canvasState.canvas.getContext("2d");
+     ctx.clearRect(0, 0, canvasState.canvas.width, canvasState.canvas.height);
+     dispatch(canvasPushToUndo(canvasState.canvas.toDataURL())); // делаю снимок пустого канваса и добавляю его в состояние(показываю отчищенный)
+    axios
+      .post(`http://localhost:5000/image?id=${params.id}`, {
+        img: canvasState.canvas.toDataURL(), // отправляю пустой хост на сервер
+      })
+      .then((res) => console.log(res.data));
+  }
 
   return (
     <div className="toolbar">
-      {/* прокинуть состояния на кнопки */}
       <button
         className="toolbar__btn brush"
         onClick={() =>
@@ -57,21 +68,23 @@ const ToolBar = () => {
       />
       <button
         className="toolbar__btn circle"
-        onClick={() => dispatch(toolSet(new Circle(canvasState.canvas)))}
+        onClick={() => dispatch(toolSet(new Circle(canvasState.canvas,socketState, sessionState)))}
       />
       <button
         className="toolbar__btn eraser"
-        onClick={() => dispatch(toolSet(new Eraser(canvasState.canvas)))}
+        onClick={() => dispatch(toolSet(new Eraser(canvasState.canvas,socketState,sessionState)))}
       />
       <button
         className="toolbar__btn line"
-        onClick={() => dispatch(toolSet(new Line(canvasState.canvas)))}
+        onClick={() => dispatch(toolSet(new Line(canvasState.canvas, socketState, sessionState)))}
       />
+      <div className="">
       <input
+      className="color"
         onChange={(e) => changeColor(e)}
-        style={{ marginLeft: 10 }}
         type="color"
       />
+      </div>
       <button
         className="toolbar__btn undo"
         onClick={() => dispatch(canvasUndo())}
@@ -79,6 +92,10 @@ const ToolBar = () => {
       <button
         className="toolbar__btn redo"
         onClick={() => dispatch(canvasRedo())}
+      />
+       <button
+        className="toolbar__btn clear"
+        onClick={() => сlearCanvas()}
       />
       <button onClick={() => download()} className="toolbar__btn save" />
     </div>

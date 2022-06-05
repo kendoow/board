@@ -3,7 +3,8 @@ import Tool from "./Tool";
 export default class Brush extends Tool {
   constructor(canvas,socket,id) {
     super(canvas,socket,id);
-    this.listen(); // полсе создания объекта канвас будет сразу слушать все функции
+    this.listen();
+    this.type = 'brush' // полсе создания объекта канвас будет сразу слушать все функции
   }
 
   listen() {
@@ -12,11 +13,10 @@ export default class Brush extends Tool {
     this.canvas.onmouseup = this.mouseUpHandler.bind(this);
   }
 
-  mouseUpHandler(e) {
+  mouseUpHandler() {
     this.mouseDown = false; // когда мышка не зажата
     if (!this.mouseDown) {
-      // this.draw(e.pageX - e.target.offsetLeft, e.pageY - e.target.offsetTop ); // соответсвтенно сам рисунок
-      this.socket.send(JSON.stringify({
+      this.socket.send(JSON.stringify({ // отправляю на сервер чтобы участники сессии могли увидеть рисунок
         method:'draw',
         id:this.id,
         figure: {
@@ -28,30 +28,32 @@ export default class Brush extends Tool {
 
   mouseDownHandler(e) {
     this.mouseDown = true; // мышка зажата 
-    this.ctx.beginPath()
     this.ctx.moveTo(e.pageX - e.target.offsetLeft, e.pageY - e.target.offsetTop) // получаю коррдинаты курсора мыши чтобы отрисовать ее поведение
   }
 
   mouseMoveHandler(e) {
       
     if (this.mouseDown) {
-      // this.draw(e.pageX - e.target.offsetLeft, e.pageY - e.target.offsetTop ); // соответсвтенно сам рисунок
       this.socket.send(JSON.stringify({
         method:'draw',
         id:this.id,
         figure: {
-          type: 'brush',
+          type: this.type,
           x:e.pageX - e.target.offsetLeft ,
           y:e.pageY - e.target.offsetTop ,
+          stroke: this.ctx.strokeStyle,
+          width: this.ctx.lineWidth  
         }
       }))
     }
   }
 
-  static draw (ctx,x,y){
-    ctx.strokeStyle = "black"
-    ctx.lineTo(x,y) // у 2д элментов в канвасе есть свойство line to и stroke соотвественно 
+  static draw (ctx,x,y,stroke,width){ 
+    ctx.strokeStyle = 'black'
+    ctx.strokeStyle = stroke
+    ctx.lineWidth = width
+    ctx.lineTo(x,y)
     ctx.stroke() 
-
+    
   }
 }

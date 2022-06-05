@@ -6,7 +6,6 @@ const SettingsBar = () => {
   const dispatch = useDispatch()
   const tool = useSelector((state) => state.tool.lineWidth)
   console.log(tool)
-  console.log()
 
 
   return (
@@ -22,7 +21,7 @@ const SettingsBar = () => {
         max={50}
       />
       <label htmlFor="stroke-color">Цвет обводки</label>
-      <input onChange={e => dispatch(toolStrokeColor(e.target.value))} id='stroke-color' type='color'/>
+      <input style={{ margin: "0 10px" }} onChange={e => dispatch(toolStrokeColor(e.target.value))} id='stroke-color' type='color'/>
     </div>
   );
 };

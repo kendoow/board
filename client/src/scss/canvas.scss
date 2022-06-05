@@ -10,7 +10,6 @@
 canvas{
     border: 1px solid black;
     background-color: #fff;
-    margin-top:75px;
 }
 .modal{
     &Title{
@@ -28,7 +27,7 @@ canvas{
         transition: all 0.2s;
         border: none;
         border-radius: 5px;
-        background-color: rgb(240, 230, 125);
+        background-color: rgb(195, 226, 239);
         &:hover{
             transform: scale(1.1);
             transition: all 0.2s;

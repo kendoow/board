@@ -14,6 +14,9 @@ import Brush from "../tools/Brush";
 import Modal from "./Modal/Modal";
 import Rect from "../tools/Rect";
 import axios from "axios";
+import Line from "../tools/Line";
+import Circle from "../tools/Circle";
+import Eraser from "../tools/Eraser";
 
 const Canvas = () => {
   const canvasRef = useRef();
@@ -55,7 +58,7 @@ const Canvas = () => {
   }, []);
 
   useEffect(() => {
-    // работа с вебсокетом
+    // соедениение по вебсокет протоколу
 
     if (username) {
       const socket = new WebSocket("ws://localhost:5000/"); // передать адрес на котором сервак пашет
@@ -63,10 +66,11 @@ const Canvas = () => {
       dispatch(canvasSetSessionId(params.id));
       dispatch(toolSet(new Brush(canvasRef.current, socket, params.id)));
       socket.onopen = () => {
+        // устанавливаю соеденение
         console.log("Соект пашет исправно");
         socket.send(
           JSON.stringify({
-            id: params.id,
+            id: params.id, // передаю id сессии из параметров
             username: username,
             method: "connection",
           })
@@ -94,32 +98,67 @@ const Canvas = () => {
     const ctx = canvasRef.current.getContext("2d");
     switch (figure.type) {
       case "brush":
-        Brush.draw(ctx, figure.x, figure.y);
+        Brush.draw(ctx, figure.x, figure.y, figure.stroke, figure.width);
+        break;
+      case "line":
+        Line.drawStaticLine(
+          ctx,
+          figure.x,
+          figure.y,
+          figure.stroke,
+          figure.strokeWidth,
+          figure.megaX,
+          figure.megaY
+        );
         break;
       case "rect":
-        Rect.drawStatic(ctx, figure.x, figure.y, figure.width, figure.height);
+        Rect.drawStatic(
+          ctx,
+          figure.x,
+          figure.y,
+          figure.width,
+          figure.height,
+          figure.color,
+          figure.stroke,
+          figure.strokeWidth
+        );
+        break;
+
+      case "circle":
+        Circle.drawCircle(
+          ctx,
+          figure.x,
+          figure.y,
+          figure.r,
+          figure.stroke,
+          figure.strokeWidth
+        );
+          
+        break;
+      case "eraser":
+        Eraser.drawEraser(ctx, figure.x, figure.y, "white", figure.width);
         break;
       case "finish":
         ctx.beginPath();
         break;
+
       default:
         break;
     }
   };
 
-  // функция соеденения с вебсокетом
-  const connectHandler = () => {
-    dispatch(canvasSetUsername(userRef.current.value)); // достаю value из input
-    setModalActive(false);
-  };
-
-  const mouseDownHandler = () => {
-    dispatch(canvasPushToUndo(canvasRef.current.toDataURL())); // делаю снимок текущего канваса и добавляю его в состояниеa
-    axios
+  const mouseUpHandler = async () => {
+    dispatch(canvasPushToUndo(canvasRef.current.toDataURL())); // делаю снимок текущего канваса и добавляю его в состояние
+    await axios
       .post(`http://localhost:5000/image?id=${params.id}`, {
         img: canvasRef.current.toDataURL(),
       })
       .then((res) => console.log(res.data));
+  };
+
+  const connectHandler = () => {
+    dispatch(canvasSetUsername(userRef.current.value)); // достаю value из input и передаю в стор
+    setModalActive(false);
   };
 
   return (
@@ -133,10 +172,10 @@ const Canvas = () => {
       </Modal>
       <div className="canvas">
         <canvas
-          onMouseDown={() => mouseDownHandler()}
+          onMouseUp={() => mouseUpHandler()}
           ref={canvasRef}
+          height={1000}
           width={1800}
-          height={900}
         />
       </div>
     </>

@@ -1,14 +1,13 @@
 import Brush from "./Brush";
 
 export default class Eraser extends Brush {
-    constructor(canvas) {
-        super(canvas);
+    constructor(canvas,socket,id) {
+        super(canvas,socket,id);
+        this.type = 'eraser'
     }
 
 
-    draw(x, y) {
-        this.ctx.strokeStyle = "white" // ластик - кисть с белыми чернилами 
-        this.ctx.lineTo(x, y)
-        this.ctx.stroke()
+   static drawEraser(ctx,x, y,color,width) {
+       super.draw(ctx,x,y,color,width)
     }
 }
