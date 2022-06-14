@@ -5,6 +5,7 @@ export default class Brush extends Tool {
     super(canvas,socket,id);
     this.listen();
     this.type = 'brush' // полсе создания объекта канвас будет сразу слушать все функции
+    this.strokeColor = 'black'
   }
 
   listen() {

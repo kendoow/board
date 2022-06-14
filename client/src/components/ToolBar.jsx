@@ -1,7 +1,12 @@
 import axios from "axios";
 import { useDispatch, useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
-import { canvasPushToUndo, canvasRedo, canvasUndo } from "../redux/slices/canvasSlice";
+import { canvasAsyncUndo } from "../redux/slices/canvasAsyncAction";
+import {
+  canvasPushToUndo,
+  canvasRedo,
+  canvasUndo,
+} from "../redux/slices/canvasSlice";
 import {
   toolFillColor,
   toolSet,
@@ -28,25 +33,36 @@ const ToolBar = () => {
   };
 
   const download = () => {
-    const dataUrl = canvasState.canvas.toDataURL()
-    console.log(dataUrl)
-    const a = document.createElement('a')
-    a.href = dataUrl
-    a.download = canvasState.sessionid + ".png"
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-}
+    const dataUrl = canvasState.canvas.toDataURL();
+    console.log(dataUrl);
+    const a = document.createElement("a");
+    a.href = dataUrl;
+    a.download = canvasState.sessionid + ".png";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+
   const сlearCanvas = () => {
     const ctx = canvasState.canvas.getContext("2d");
-     ctx.clearRect(0, 0, canvasState.canvas.width, canvasState.canvas.height);
-     dispatch(canvasPushToUndo(canvasState.canvas.toDataURL())); // делаю снимок пустого канваса и добавляю его в состояние(показываю отчищенный)
+    ctx.clearRect(0, 0, canvasState.canvas.width, canvasState.canvas.height);
+    dispatch(canvasPushToUndo(canvasState.canvas.toDataURL()));
+    socketState.send(
+      JSON.stringify({
+        // отправляю на сервер чтобы участники сессии могли увидеть рисунок
+        method: "draw",
+        id: params.id,
+        figure: {
+          type: "delete",
+        },
+      })
+    );
     axios
       .post(`http://localhost:5000/image?id=${params.id}`, {
         img: canvasState.canvas.toDataURL(), // отправляю пустой хост на сервер
       })
       .then((res) => console.log(res.data));
-  }
+  };
 
   return (
     <div className="toolbar">
@@ -68,35 +84,47 @@ const ToolBar = () => {
       />
       <button
         className="toolbar__btn circle"
-        onClick={() => dispatch(toolSet(new Circle(canvasState.canvas,socketState, sessionState)))}
+        onClick={() =>
+          dispatch(
+            toolSet(new Circle(canvasState.canvas, socketState, sessionState))
+          )
+        }
       />
       <button
         className="toolbar__btn eraser"
-        onClick={() => dispatch(toolSet(new Eraser(canvasState.canvas,socketState,sessionState)))}
+        onClick={() =>
+          dispatch(
+            toolSet(new Eraser(canvasState.canvas, socketState, sessionState))
+          )
+        }
       />
       <button
         className="toolbar__btn line"
-        onClick={() => dispatch(toolSet(new Line(canvasState.canvas, socketState, sessionState)))}
+        onClick={() =>
+          dispatch(
+            toolSet(new Line(canvasState.canvas, socketState, sessionState))
+          )
+        }
       />
       <div className="">
-      <input
-      className="color"
-        onChange={(e) => changeColor(e)}
-        type="color"
-      />
+        <input
+          className="color"
+          onChange={(e) => changeColor(e)}
+          type="color"
+        />
       </div>
       <button
         className="toolbar__btn undo"
-        onClick={() => dispatch(canvasUndo())}
+        onClick={() => {
+          dispatch(canvasUndo(params.id));
+          dispatch(canvasAsyncUndo(params.id, canvasState.canvas.toDataURL()));
+        }}
       />
       <button
         className="toolbar__btn redo"
         onClick={() => dispatch(canvasRedo())}
       />
-       <button
-        className="toolbar__btn clear"
-        onClick={() => сlearCanvas()}
-      />
+      <button className="toolbar__btn clear" onClick={() => сlearCanvas()} />
       <button onClick={() => download()} className="toolbar__btn save" />
     </div>
   );

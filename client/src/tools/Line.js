@@ -5,6 +5,7 @@ export default class Line extends Tool {
     super(canvas,socket,id);
     this.listen();
     this.name = "Line";
+    this.strokeColor = 'black'
   }
 
   listen() {
@@ -75,5 +76,6 @@ export default class Line extends Tool {
     ctx.moveTo(x,y);
     ctx.lineTo(megaX, megaY);
     ctx.stroke();
+    ctx.beginPath();
   }
 }

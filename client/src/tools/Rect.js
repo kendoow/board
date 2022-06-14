@@ -4,6 +4,7 @@ export default class Rect extends Tool {
   constructor(canvas, socket, id) {
     super(canvas, socket, id);
     this.listen(); // полсе создания объекта канвас будет сразу слушать все функции
+    this.strokeColor = 'black'
   }
 
   listen() {

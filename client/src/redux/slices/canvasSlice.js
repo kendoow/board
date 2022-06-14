@@ -1,4 +1,8 @@
 import { createSlice } from "@reduxjs/toolkit";
+import axios from "axios";
+import { useParams } from "react-router-dom";
+import { canvasAsyncUndo } from "./canvasAsyncAction";
+
 
 const initialState = {
   canvas: null,
@@ -10,6 +14,7 @@ const initialState = {
 };
 
 const canvasSlice = createSlice({
+  
   name: "canvas",
   initialState,
   reducers: {
@@ -31,43 +36,48 @@ const canvasSlice = createSlice({
     canvasPushToRedo: (state, action) => {
       state.redoList.push(action.payload);
     },
-    canvasUndo(state) {
+    canvasUndo (state, action) {
       let ctx = state.canvas.getContext("2d"); // получаю контекст
-      if (state.undoList.length > 0) {
+      
+      if (state.undoList.length) {
         // есть ли что-то внутри массива?
         let dataUrl = state.undoList.pop(); // если в массиве что-то есть, достаем из него 1 элемент(последнее действие сделанное пользователем)
-        state.redoList.push(state.canvas.toDataURL()); // после каждой отмены действия сохраняю его в массив отмененных действий
+        canvasPushToRedo(state.canvas.toDataURL()); // после каждой отмены действия сохраняю его в массив отмененных действий
         let img = new Image();
         img.src = dataUrl; // в src снимок последнего действия на канвасе
-        console.log(dataUrl);
-        const mapped = () => {
-          return state.undoList.map((el) => el);
-        };
-        state.undoList = mapped();
-        console.log(mapped());
-        img.onload = () => {
-          // когда изменное изображение с src загрузится, тогда
-          ctx.clearRect(0, 0, state.canvas.width, state.canvas.height); // отчищаем весь канвас чтобы избавиться от лишнего действия
-          ctx.drawImage(img, 0, 0, state.canvas.width, state.canvas.height); // передаем измененное изображение
-        };
+        // console.log(dataUrl);
+        
+        // canvasAsyncUndo(action.payload)
+        
+        // img.onload = () => {
+        //   // когда изменное изображение с src загрузится, тогда
+        //   ctx.clearRect(0, 0, state.canvas.width, state.canvas.height); // отчищаем весь канвас чтобы избавиться от лишнего действия
+        //   ctx.drawImage(img, 0, 0, state.canvas.width, state.canvas.height); // передаем измененное изображение
+        // };
       } else {
         ctx.clearRect(0, 0, state.canvas.width, state.canvas.height); // отчистка канваса если массив пустой
       }
     },
     canvasRedo(state) {
       let ctx = state.canvas.getContext("2d");
-      if (state.redoList.length > 0) {
+      if (state.redoList.length) {
         // если в массиве что-то есть, достаем из него 1 элемент(последнее действие сделанное пользователем)
         let dataUrl = state.redoList.pop();
-        state.undoList.push(state.canvas.toDataURL());
-        let img = new Image();
-        img.src = dataUrl;
-        img.onload = () => {
-          ctx.clearRect(0, 0, state.canvas.width, state.canvas.height);
-          ctx.drawImage(img, 0, 0, state.canvas.width, state.canvas.height);
-        };
+        canvasPushToUndo(state.canvas.toDataURL());
+        // let img = new Image();
+        // img.src = dataUrl;
+        // console.log(dataUrl);
+        // img.onload = () => {
+        //   ctx.clearRect(0, 0, state.canvas.width, state.canvas.height);
+        //   ctx.drawImage(img, 0, 0, state.canvas.width, state.canvas.height);
+        // };
       }
     },
+    extraReducers: {
+      [canvasAsyncUndo.fulfilled.type]: (state,action) => {
+        console.log(1)
+      }
+    }
   },
 });
 

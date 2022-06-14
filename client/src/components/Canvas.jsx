@@ -17,6 +17,7 @@ import axios from "axios";
 import Line from "../tools/Line";
 import Circle from "../tools/Circle";
 import Eraser from "../tools/Eraser";
+import { canvasAsyncUndo } from "../redux/slices/canvasAsyncAction";
 
 const Canvas = () => {
   const canvasRef = useRef();
@@ -25,12 +26,14 @@ const Canvas = () => {
   const dispatch = useDispatch();
   const canvasRedo = useSelector((state) => state.canvas.canvasRedo);
   const username = useSelector((state) => state.canvas.username);
+  const canvasState = useSelector((state) => state.canvas);
 
   const params = useParams(); // поулчаю парамсы чтобы в id передать сгенеренную дату переведенную в строку (см компонент App)
   const [modalActive, setModalActive] = useState(true);
 
   useEffect(() => {
     dispatch(canvasSet(canvasRef.current));
+    
     let ctx = canvasRef.current.getContext("2d");
     axios
       .get(`http://localhost:5000/image?id=${params.id}`)
@@ -54,6 +57,7 @@ const Canvas = () => {
           ctx.stroke(); // обводка
         };
       });
+
     console.log(canvasRedo);
   }, []);
 
@@ -133,10 +137,19 @@ const Canvas = () => {
           figure.stroke,
           figure.strokeWidth
         );
-          
+
         break;
       case "eraser":
         Eraser.drawEraser(ctx, figure.x, figure.y, "white", figure.width);
+        break;
+      case "delete":
+        ctx.clearRect(
+          0,
+          0,
+          canvasState.canvas.width,
+          canvasState.canvas.height
+        );
+        dispatch(canvasPushToUndo(canvasState.canvas.toDataURL()));
         break;
       case "finish":
         ctx.beginPath();
@@ -160,7 +173,7 @@ const Canvas = () => {
     dispatch(canvasSetUsername(userRef.current.value)); // достаю value из input и передаю в стор
     setModalActive(false);
   };
-
+  console.log(window.height)
   return (
     <>
       <Modal active={modalActive} setActive={setModalActive}>
@@ -174,8 +187,8 @@ const Canvas = () => {
         <canvas
           onMouseUp={() => mouseUpHandler()}
           ref={canvasRef}
-          height={1000}
-          width={1800}
+          height={window.innerHeight}
+          width={window.innerWidth}
         />
       </div>
     </>
